@@ -34,4 +34,5 @@ export interface FieldMetadataInterface<
   isActive?: boolean;
   generatedType?: 'STORED' | 'VIRTUAL';
   asExpression?: string;
+  isTimelineRollupEnabled?: boolean;
 }
