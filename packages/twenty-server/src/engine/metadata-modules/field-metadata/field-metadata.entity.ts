@@ -150,6 +150,9 @@ export class FieldMetadataEntity<
   )
   indexFieldMetadatas: Relation<IndexFieldMetadataEntity>;
 
+  @Column({ type: 'boolean', default: false })
+  isTimelineRollupEnabled: boolean;
+
   @CreateDateColumn({ type: 'timestamptz' })
   createdAt: Date;
 

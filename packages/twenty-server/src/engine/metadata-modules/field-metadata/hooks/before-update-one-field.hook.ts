@@ -81,6 +81,7 @@ export class BeforeUpdateOneField<T extends UpdateFieldInput>
       'options',
       'settings',
       'defaultValue',
+      'isTimelineRollupEnabled',
     ];
     const overridableFields = ['label', 'icon', 'description'];
 

@@ -160,4 +160,7 @@ export class FieldMetadataDTO<T extends FieldMetadataType = FieldMetadataType> {
   @IsDateString()
   @Field()
   updatedAt: Date;
+
+  @Field(() => Boolean, { nullable: true })
+  isTimelineRollupEnabled?: boolean;
 }
