@@ -39,4 +39,5 @@ export type FieldMetadataItem = Omit<
   } | null;
   settings?: FieldDateMetadataSettings;
   isLabelSyncedWithName?: boolean | null;
+  isTimelineRollupEnabled?: boolean | null;
 };
