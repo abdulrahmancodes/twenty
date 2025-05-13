@@ -402,6 +402,7 @@ export type CreateFieldInput = {
   isNullable?: InputMaybe<Scalars['Boolean']>;
   isRemoteCreation?: InputMaybe<Scalars['Boolean']>;
   isSystem?: InputMaybe<Scalars['Boolean']>;
+  isTimelineRollupEnabled?: InputMaybe<Scalars['Boolean']>;
   isUnique?: InputMaybe<Scalars['Boolean']>;
   label: Scalars['String'];
   name: Scalars['String'];
@@ -599,6 +600,7 @@ export type Field = {
   isLabelSyncedWithName?: Maybe<Scalars['Boolean']>;
   isNullable?: Maybe<Scalars['Boolean']>;
   isSystem?: Maybe<Scalars['Boolean']>;
+  isTimelineRollupEnabled?: Maybe<Scalars['Boolean']>;
   isUnique?: Maybe<Scalars['Boolean']>;
   label: Scalars['String'];
   name: Scalars['String'];
@@ -2101,6 +2103,7 @@ export type UpdateFieldInput = {
   isLabelSyncedWithName?: InputMaybe<Scalars['Boolean']>;
   isNullable?: InputMaybe<Scalars['Boolean']>;
   isSystem?: InputMaybe<Scalars['Boolean']>;
+  isTimelineRollupEnabled?: InputMaybe<Scalars['Boolean']>;
   isUnique?: InputMaybe<Scalars['Boolean']>;
   label?: InputMaybe<Scalars['String']>;
   name?: InputMaybe<Scalars['String']>;
