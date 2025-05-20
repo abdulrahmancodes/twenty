@@ -170,7 +170,13 @@ describe('SearchResolver', () => {
           ],
           pageInfo: {
             hasNextPage: false,
-            decodedEndCursor: null,
+            decodedEndCursor: {
+              lastRanks: { tsRank: 0, tsRankCD: 0 },
+              lastRecordIdsPerObject: {
+                person: thirdPerson.id,
+                [LISTING_NAME_SINGULAR]: secondListing.id,
+              },
+            },
           },
         },
       },
@@ -186,7 +192,13 @@ describe('SearchResolver', () => {
           orderedRecordIds: [firstPerson.id, firstListing.id],
           pageInfo: {
             hasNextPage: false,
-            decodedEndCursor: null,
+            decodedEndCursor: {
+              lastRanks: { tsRank: 0.06079271, tsRankCD: 0.1 },
+              lastRecordIdsPerObject: {
+                person: firstPerson.id,
+                [LISTING_NAME_SINGULAR]: firstListing.id,
+              },
+            },
           },
         },
       },
@@ -203,7 +215,12 @@ describe('SearchResolver', () => {
           orderedRecordIds: [firstListing.id, secondListing.id],
           pageInfo: {
             hasNextPage: false,
-            decodedEndCursor: null,
+            decodedEndCursor: {
+              lastRanks: { tsRank: 0, tsRankCD: 0 },
+              lastRecordIdsPerObject: {
+                [LISTING_NAME_SINGULAR]: secondListing.id,
+              },
+            },
           },
         },
       },
@@ -220,7 +237,12 @@ describe('SearchResolver', () => {
           orderedRecordIds: [firstListing.id, secondListing.id],
           pageInfo: {
             hasNextPage: false,
-            decodedEndCursor: null,
+            decodedEndCursor: {
+              lastRanks: { tsRank: 0, tsRankCD: 0 },
+              lastRecordIdsPerObject: {
+                [LISTING_NAME_SINGULAR]: secondListing.id,
+              },
+            },
           },
         },
       },
@@ -237,7 +259,12 @@ describe('SearchResolver', () => {
           orderedRecordIds: [firstListing.id],
           pageInfo: {
             hasNextPage: false,
-            decodedEndCursor: null,
+            decodedEndCursor: {
+              lastRanks: { tsRank: 0, tsRankCD: 0 },
+              lastRecordIdsPerObject: {
+                [LISTING_NAME_SINGULAR]: firstListing.id,
+              },
+            },
           },
         },
       },
@@ -283,7 +310,6 @@ describe('SearchResolver', () => {
             decodedEndCursor: {
               lastRanks: { tsRank: 0, tsRankCD: 0 },
               lastRecordIdsPerObject: {
-                [LISTING_NAME_SINGULAR]: null,
                 person: secondPerson.id,
               },
             },
@@ -299,7 +325,6 @@ describe('SearchResolver', () => {
           after: encodeCursorData({
             lastRanks: { tsRank: 0, tsRankCD: 0 },
             lastRecordIdsPerObject: {
-              [LISTING_NAME_SINGULAR]: null,
               person: secondPerson.id,
             },
           }),
@@ -361,7 +386,6 @@ describe('SearchResolver', () => {
             decodedEndCursor: {
               lastRanks: { tsRank: 0.06079271, tsRankCD: 0.1 },
               lastRecordIdsPerObject: {
-                [LISTING_NAME_SINGULAR]: null,
                 person: secondPerson.id,
               },
             },
@@ -378,7 +402,6 @@ describe('SearchResolver', () => {
           after: encodeCursorData({
             lastRanks: { tsRank: 0.06079271, tsRankCD: 0.1 },
             lastRecordIdsPerObject: {
-              [LISTING_NAME_SINGULAR]: null,
               person: secondPerson.id,
             },
           }),
@@ -408,7 +431,6 @@ describe('SearchResolver', () => {
           after: encodeCursorData({
             lastRanks: { tsRank: 0.06079271, tsRankCD: 0.1 },
             lastRecordIdsPerObject: {
-              [LISTING_NAME_SINGULAR]: null,
               person: secondPerson.id,
             },
           }),
@@ -419,7 +441,13 @@ describe('SearchResolver', () => {
           orderedRecordIds: [thirdPerson.id, secondListing.id],
           pageInfo: {
             hasNextPage: false,
-            decodedEndCursor: null,
+            decodedEndCursor: {
+              lastRanks: { tsRank: 0.06079271, tsRankCD: 0.1 },
+              lastRecordIdsPerObject: {
+                person: thirdPerson.id,
+                [LISTING_NAME_SINGULAR]: secondListing.id,
+              },
+            },
           },
         },
       },
@@ -496,5 +524,105 @@ describe('SearchResolver', () => {
         ? decodeCursor(pageInfo.endCursor)
         : pageInfo.endCursor,
     );
+  });
+
+  it('should return cursor for each search edge', async () => {
+    const graphqlOperation = searchFactory({
+      searchInput: 'searchInput',
+      limit: 2,
+    });
+
+    const response = await makeGraphqlAPIRequest(graphqlOperation);
+
+    const expectedResult = {
+      edges: [
+        {
+          cursor: encodeCursorData({
+            lastRanks: { tsRankCD: 0.1, tsRank: 0.06079271 },
+            lastRecordIdsPerObject: {
+              person: firstPerson.id,
+            },
+          }),
+        },
+        {
+          cursor: encodeCursorData({
+            lastRanks: { tsRankCD: 0.1, tsRank: 0.06079271 },
+            lastRecordIdsPerObject: {
+              person: secondPerson.id,
+            },
+          }),
+        },
+      ],
+      pageInfo: {
+        hasNextPage: true,
+        endCursor: encodeCursorData({
+          lastRanks: { tsRankCD: 0.1, tsRank: 0.06079271 },
+          lastRecordIdsPerObject: {
+            person: secondPerson.id,
+          },
+        }),
+      },
+    };
+
+    expect({
+      ...response.body.data.search,
+      edges: response.body.data.search.edges.map((edge: SearchEdgeDTO) => ({
+        cursor: edge.cursor,
+      })),
+    }).toEqual(expectedResult);
+  });
+
+  it('should return cursor for each search edge with after cursor input', async () => {
+    const graphqlOperation = searchFactory({
+      searchInput: 'searchInput',
+      limit: 2,
+      after: encodeCursorData({
+        lastRanks: { tsRankCD: 0.1, tsRank: 0.06079271 },
+        lastRecordIdsPerObject: {
+          person: secondPerson.id,
+        },
+      }),
+    });
+
+    const response = await makeGraphqlAPIRequest(graphqlOperation);
+
+    const expectedResult = {
+      edges: [
+        {
+          cursor: encodeCursorData({
+            lastRanks: { tsRankCD: 0.1, tsRank: 0.06079271 },
+            lastRecordIdsPerObject: {
+              person: thirdPerson.id,
+            },
+          }),
+        },
+        {
+          cursor: encodeCursorData({
+            lastRanks: { tsRankCD: 0.1, tsRank: 0.06079271 },
+            lastRecordIdsPerObject: {
+              person: thirdPerson.id,
+              [LISTING_NAME_SINGULAR]: firstListing.id,
+            },
+          }),
+        },
+      ],
+      pageInfo: {
+        hasNextPage: true,
+        endCursor: encodeCursorData({
+          lastRanks: { tsRankCD: 0.1, tsRank: 0.06079271 },
+          lastRecordIdsPerObject: {
+            person: thirdPerson.id,
+            [LISTING_NAME_SINGULAR]: firstListing.id,
+          },
+        }),
+      },
+    };
+
+    expect({
+      ...response.body.data.search,
+      edges: response.body.data.search.edges.map((edge: SearchEdgeDTO) => ({
+        cursor: edge.cursor,
+      })),
+    }).toEqual(expectedResult);
   });
 });

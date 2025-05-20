@@ -24,7 +24,6 @@ import { SEARCH_VECTOR_FIELD } from 'src/engine/metadata-modules/constants/searc
 import { ObjectMetadataItemWithFieldMaps } from 'src/engine/metadata-modules/types/object-metadata-item-with-field-maps';
 import { generateObjectMetadataMaps } from 'src/engine/metadata-modules/utils/generate-object-metadata-maps.util';
 import { WorkspaceRepository } from 'src/engine/twenty-orm/repository/workspace.repository';
-import { SearchEdgeDTO } from 'src/engine/core-modules/search/dtos/search-edge.dto';
 import {
   decodeCursor,
   encodeCursorData,
@@ -42,12 +41,15 @@ import { Workspace } from 'src/engine/core-modules/workspace/workspace.entity';
 import { TwentyORMManager } from 'src/engine/twenty-orm/twenty-orm.manager';
 import { formatSearchTerms } from 'src/engine/core-modules/search/utils/format-search-terms';
 import { SearchArgs } from 'src/engine/core-modules/search/dtos/search-args';
+import { SearchRecordDTO } from 'src/engine/core-modules/search/dtos/search-record.dto';
+import { SearchDTO } from 'src/engine/core-modules/search/dtos/search.dto';
+import { SearchEdgeDTO } from 'src/engine/core-modules/search/dtos/search-edge.dto';
 
-type LastRanks = { tsRankCD: number; tsRank: number } | null;
+type LastRanks = { tsRankCD: number; tsRank: number };
 
 export type SearchCursor = {
   lastRanks: LastRanks;
-  lastRecordIdsPerObject: Record<string, string | null>;
+  lastRecordIdsPerObject: Record<string, string | undefined>;
 };
 
 const OBJECT_METADATA_ITEMS_CHUNK_SIZE = 5;
@@ -273,37 +275,28 @@ export class SearchService {
     if (after) {
       const { lastRanks, lastRecordIdsPerObject } =
         decodeCursor<SearchCursor>(after);
+
       const lastRecordId = lastRecordIdsPerObject[objectMetadataNameSingular];
-      const tsRank = lastRanks?.tsRank;
-      const tsRankCD = lastRanks?.tsRankCD;
 
       return new Brackets((qb) => {
         qb.where(
           new Brackets((inner) => {
-            if (tsRank !== undefined) {
-              inner.andWhere(`${tsRankExpr} < :tsRankLt`, {
-                tsRankLt: tsRank,
-              });
-            }
-            if (tsRankCD !== undefined) {
-              inner.andWhere(`${tsRankCDExpr} < :tsRankCDLt`, {
-                tsRankCDLt: tsRankCD,
-              });
-            }
+            inner.andWhere(`${tsRankExpr} < :tsRankLt`, {
+              tsRankLt: lastRanks.tsRank,
+            });
+            inner.andWhere(`${tsRankCDExpr} < :tsRankCDLt`, {
+              tsRankCDLt: lastRanks.tsRankCD,
+            });
           }),
         ).orWhere(
           new Brackets((inner) => {
-            if (tsRank !== undefined) {
-              inner.andWhere(`${tsRankExpr} = :tsRankEq`, {
-                tsRankEq: tsRank,
-              });
-            }
-            if (tsRankCD !== undefined) {
-              inner.andWhere(`${tsRankCDExpr} = :tsRankCDEq`, {
-                tsRankCDEq: tsRankCD,
-              });
-            }
-            if (lastRecordId !== null) {
+            inner.andWhere(`${tsRankExpr} = :tsRankEq`, {
+              tsRankEq: lastRanks.tsRank,
+            });
+            inner.andWhere(`${tsRankCDExpr} = :tsRankCDEq`, {
+              tsRankCDEq: lastRanks.tsRankCD,
+            });
+            if (lastRecordId !== undefined) {
               inner.andWhere('id > :lastRecordId', { lastRecordId });
             }
           }),
@@ -392,112 +385,102 @@ export class SearchService {
       : '';
   }
 
-  computeEndCursor({
+  computeEdges({
     sortedRecords,
-    limit,
+    after,
   }: {
-    sortedRecords: SearchEdgeDTO[];
-    limit: number;
-  }) {
-    const lastRecord = sortedRecords[sortedRecords.length - 1];
+    sortedRecords: SearchRecordDTO[];
+    after?: string;
+  }): SearchEdgeDTO[] {
+    const recordEdges = [];
 
-    if (!lastRecord) {
-      return { endCursor: null, hasNextPage: false };
+    const lastRecordIdsPerObject = after
+      ? {
+          ...decodeCursor<SearchCursor>(after).lastRecordIdsPerObject,
+        }
+      : {};
+
+    for (const record of sortedRecords) {
+      const { objectNameSingular, tsRankCD, tsRank, recordId } = record;
+
+      lastRecordIdsPerObject[objectNameSingular] = recordId;
+
+      const lastRecordIdsPerObjectSnapshot = { ...lastRecordIdsPerObject };
+
+      recordEdges.push({
+        node: record,
+        cursor: encodeCursorData({
+          lastRanks: {
+            tsRankCD,
+            tsRank,
+          },
+          lastRecordIdsPerObject: lastRecordIdsPerObjectSnapshot,
+        }),
+      });
     }
 
-    const lastRecordIdsPerObject: Record<string, string | null> = {};
-
-    const objectSeen: Set<string> = new Set();
-
-    let lastRanks: { tsRankCD: number; tsRank: number } | null = null;
-
-    let hasNextPage = false;
-
-    sortedRecords.forEach((record, index) => {
-      const { objectNameSingular, tsRankCD, tsRank, recordId } = record.node;
-
-      if (index < limit) {
-        lastRanks = { tsRankCD, tsRank };
-        lastRecordIdsPerObject[objectNameSingular] = recordId;
-        objectSeen.add(objectNameSingular);
-      } else if (!objectSeen.has(objectNameSingular)) {
-        lastRecordIdsPerObject[objectNameSingular] = null;
-        hasNextPage = true;
-      } else {
-        hasNextPage = true;
-      }
-    });
-
-    return {
-      endCursor: hasNextPage
-        ? encodeCursorData({
-            lastRanks,
-            lastRecordIdsPerObject: lastRecordIdsPerObject,
-          })
-        : null,
-      hasNextPage,
-    };
+    return recordEdges;
   }
 
-  computeSearchObjectResults(
-    recordsWithObjectMetadataItems: RecordsWithObjectMetadataItem[],
-    workspaceId: string,
-    limit: number,
-  ): {
-    records: SearchEdgeDTO[];
-    endCursor: string | null;
-    hasNextPage: boolean;
-  } {
+  computeSearchObjectResults({
+    recordsWithObjectMetadataItems,
+    workspaceId,
+    limit,
+    after,
+  }: {
+    recordsWithObjectMetadataItems: RecordsWithObjectMetadataItem[];
+    workspaceId: string;
+    limit: number;
+    after?: string;
+  }): SearchDTO {
     const searchRecords = recordsWithObjectMetadataItems.flatMap(
       ({ objectMetadataItem, records }) => {
         return records.map((record) => {
           return {
-            node: {
-              recordId: record.id,
-              objectNameSingular: objectMetadataItem.nameSingular,
-              label: this.getLabelIdentifierValue(record, objectMetadataItem),
-              imageUrl: this.getImageIdentifierValue(
-                record,
-                objectMetadataItem,
-                workspaceId,
-              ),
-              tsRankCD: record.tsRankCD,
-              tsRank: record.tsRank,
-            },
-            cursor: null,
+            recordId: record.id,
+            objectNameSingular: objectMetadataItem.nameSingular,
+            label: this.getLabelIdentifierValue(record, objectMetadataItem),
+            imageUrl: this.getImageIdentifierValue(
+              record,
+              objectMetadataItem,
+              workspaceId,
+            ),
+            tsRankCD: record.tsRankCD,
+            tsRank: record.tsRank,
           };
         });
       },
     );
 
-    const sortedRecords = this.sortSearchObjectResults(searchRecords);
-
-    const { endCursor, hasNextPage } = this.computeEndCursor({
-      sortedRecords: searchRecords,
+    const sortedRecords = this.sortSearchObjectResults(searchRecords).slice(
+      0,
       limit,
-    });
+    );
 
-    const sortedSlicedRecords =
-      limit !== undefined ? sortedRecords.slice(0, limit) : sortedRecords;
+    const hasNextPage = searchRecords.length > limit;
 
-    return { records: sortedSlicedRecords, endCursor, hasNextPage };
+    const recordEdges = this.computeEdges({ sortedRecords, after });
+
+    const endCursor = recordEdges[recordEdges.length - 1]?.cursor;
+
+    return { edges: recordEdges, pageInfo: { endCursor, hasNextPage } };
   }
 
-  sortSearchObjectResults(searchObjectResultsWithRank: SearchEdgeDTO[]) {
+  sortSearchObjectResults(searchObjectResultsWithRank: SearchRecordDTO[]) {
     return searchObjectResultsWithRank.sort((a, b) => {
-      if (a.node.tsRankCD !== b.node.tsRankCD) {
-        return b.node.tsRankCD - a.node.tsRankCD;
+      if (a.tsRankCD !== b.tsRankCD) {
+        return b.tsRankCD - a.tsRankCD;
       }
 
-      if (a.node.tsRank !== b.node.tsRank) {
-        return b.node.tsRank - a.node.tsRank;
+      if (a.tsRank !== b.tsRank) {
+        return b.tsRank - a.tsRank;
       }
 
       return (
         // @ts-expect-error legacy noImplicitAny
-        (STANDARD_OBJECTS_BY_PRIORITY_RANK[b.node.objectNameSingular] || 0) -
+        (STANDARD_OBJECTS_BY_PRIORITY_RANK[b.objectNameSingular] || 0) -
         // @ts-expect-error legacy noImplicitAny
-        (STANDARD_OBJECTS_BY_PRIORITY_RANK[a.node.objectNameSingular] || 0)
+        (STANDARD_OBJECTS_BY_PRIORITY_RANK[a.objectNameSingular] || 0)
       );
     });
   }

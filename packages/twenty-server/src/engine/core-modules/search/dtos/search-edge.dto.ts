@@ -7,6 +7,6 @@ export class SearchEdgeDTO {
   @Field(() => SearchRecordDTO)
   node: SearchRecordDTO;
 
-  @Field(() => String, { nullable: true })
-  cursor?: string | null;
+  @Field(() => String)
+  cursor: string;
 }

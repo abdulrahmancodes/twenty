@@ -47,19 +47,11 @@ export class SearchResolver {
         after,
       });
 
-    const { records, endCursor, hasNextPage } =
-      this.searchService.computeSearchObjectResults(
-        allRecordsWithObjectMetadataItems,
-        workspace.id,
-        limit,
-      );
-
-    return {
-      edges: records,
-      pageInfo: {
-        hasNextPage,
-        endCursor,
-      },
-    };
+    return this.searchService.computeSearchObjectResults({
+      recordsWithObjectMetadataItems: allRecordsWithObjectMetadataItems,
+      workspaceId: workspace.id,
+      limit,
+      after,
+    });
   }
 }
