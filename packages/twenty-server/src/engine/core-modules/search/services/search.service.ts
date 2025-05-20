@@ -279,28 +279,32 @@ export class SearchService {
       const lastRecordId = lastRecordIdsPerObject[objectMetadataNameSingular];
 
       return new Brackets((qb) => {
-        qb.where(
-          new Brackets((inner) => {
-            inner.andWhere(`${tsRankExpr} < :tsRankLt`, {
-              tsRankLt: lastRanks.tsRank,
-            });
-            inner.andWhere(`${tsRankCDExpr} < :tsRankCDLt`, {
-              tsRankCDLt: lastRanks.tsRankCD,
-            });
-          }),
-        ).orWhere(
-          new Brackets((inner) => {
-            inner.andWhere(`${tsRankExpr} = :tsRankEq`, {
-              tsRankEq: lastRanks.tsRank,
-            });
-            inner.andWhere(`${tsRankCDExpr} = :tsRankCDEq`, {
-              tsRankCDEq: lastRanks.tsRankCD,
-            });
-            if (lastRecordId !== undefined) {
-              inner.andWhere('id > :lastRecordId', { lastRecordId });
-            }
-          }),
-        );
+        qb.where(`${tsRankCDExpr} < :tsRankCDLt`, {
+          tsRankCDLt: lastRanks.tsRankCD,
+        })
+          .orWhere(
+            new Brackets((inner) => {
+              inner.andWhere(`${tsRankCDExpr} = :tsRankCDEq`, {
+                tsRankCDEq: lastRanks.tsRankCD,
+              });
+              inner.andWhere(`${tsRankExpr} < :tsRankLt`, {
+                tsRankLt: lastRanks.tsRank,
+              });
+            }),
+          )
+          .orWhere(
+            new Brackets((inner) => {
+              inner.andWhere(`${tsRankCDExpr} = :tsRankCDEq`, {
+                tsRankCDEq: lastRanks.tsRankCD,
+              });
+              inner.andWhere(`${tsRankExpr} = :tsRankEq`, {
+                tsRankEq: lastRanks.tsRank,
+              });
+              if (lastRecordId !== undefined) {
+                inner.andWhere('id > :lastRecordId', { lastRecordId });
+              }
+            }),
+          );
       });
     }
   }
