@@ -424,6 +424,50 @@ describe('SearchResolver', () => {
         },
       },
     },
+    {
+      title: 'should paginate properly with excludedObject',
+      context: {
+        input: {
+          searchInput: '',
+          excludedObjectNameSingulars: ['person'],
+          limit: 1,
+        },
+        eval: {
+          orderedRecordIds: [firstListing.id],
+          pageInfo: {
+            hasNextPage: true,
+            decodedEndCursor: {
+              lastRanks: { tsRank: 0, tsRankCD: 0 },
+              lastRecordIdsPerObject: {
+                [LISTING_NAME_SINGULAR]: firstListing.id,
+              },
+            },
+          },
+        },
+      },
+    },
+    {
+      title: 'should paginate properly with included Objects only',
+      context: {
+        input: {
+          searchInput: '',
+          includedObjectNameSingulars: [LISTING_NAME_SINGULAR],
+          limit: 1,
+        },
+        eval: {
+          orderedRecordIds: [firstListing.id],
+          pageInfo: {
+            hasNextPage: true,
+            decodedEndCursor: {
+              lastRanks: { tsRank: 0, tsRankCD: 0 },
+              lastRecordIdsPerObject: {
+                [LISTING_NAME_SINGULAR]: firstListing.id,
+              },
+            },
+          },
+        },
+      },
+    },
   ];
 
   it.each(testsUseCases)('$title', async ({ context }) => {
