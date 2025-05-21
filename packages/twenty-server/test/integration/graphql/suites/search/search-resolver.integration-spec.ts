@@ -24,7 +24,7 @@ import {
   TEST_LISTING_ID_2,
 } from 'test/integration/metadata/suites/object-metadata/constants/test-object-name-record-ids.constant';
 
-import { SearchEdgeDTO } from 'src/engine/core-modules/search/dtos/search-edge.dto';
+import { SearchResultEdgeDTO } from 'src/engine/core-modules/search/dtos/search-result-edge.dto';
 import {
   decodeCursor,
   encodeCursorData,
@@ -529,9 +529,9 @@ describe('SearchResolver', () => {
       ? expect(edges).not.toHaveLength(0)
       : expect(edges).toHaveLength(0);
 
-    expect(edges.map((edge: SearchEdgeDTO) => edge.node.recordId)).toEqual(
-      context.eval.orderedRecordIds,
-    );
+    expect(
+      edges.map((edge: SearchResultEdgeDTO) => edge.node.recordId),
+    ).toEqual(context.eval.orderedRecordIds);
 
     expect(pageInfo).toBeDefined();
     expect(context.eval.pageInfo.hasNextPage).toEqual(pageInfo.hasNextPage);
@@ -582,9 +582,11 @@ describe('SearchResolver', () => {
 
     expect({
       ...response.body.data.search,
-      edges: response.body.data.search.edges.map((edge: SearchEdgeDTO) => ({
-        cursor: edge.cursor,
-      })),
+      edges: response.body.data.search.edges.map(
+        (edge: SearchResultEdgeDTO) => ({
+          cursor: edge.cursor,
+        }),
+      ),
     }).toEqual(expectedResult);
   });
 
@@ -636,9 +638,11 @@ describe('SearchResolver', () => {
 
     expect({
       ...response.body.data.search,
-      edges: response.body.data.search.edges.map((edge: SearchEdgeDTO) => ({
-        cursor: edge.cursor,
-      })),
+      edges: response.body.data.search.edges.map(
+        (edge: SearchResultEdgeDTO) => ({
+          cursor: edge.cursor,
+        }),
+      ),
     }).toEqual(expectedResult);
   });
 });

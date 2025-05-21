@@ -12,7 +12,7 @@ import { isNonEmptyArray } from '@sniptt/guards';
 import { useRecoilCallback } from 'recoil';
 import { capitalize, isDefined } from 'twenty-shared/utils';
 import { SearchRecord } from '~/generated-metadata/graphql';
-import { SearchEdge } from '~/generated/graphql';
+import { SearchResultEdge } from '~/generated/graphql';
 
 const MULTIPLE_RECORD_PICKER_PAGE_SIZE = 30;
 
@@ -389,7 +389,7 @@ const performSearchQueries = async ({
         limit: MULTIPLE_RECORD_PICKER_PAGE_SIZE,
       },
     });
-    return data.search.edges.map((edge: SearchEdge) => edge.node);
+    return data.search.edges.map((edge: SearchResultEdge) => edge.node);
   };
 
   const searchRecordsExcludingPickedRecords = await searchRecords(

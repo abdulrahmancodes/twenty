@@ -1550,7 +1550,7 @@ export type Query = {
   object: Object;
   objects: ObjectConnection;
   plans: Array<BillingPlanOutput>;
-  search: Search;
+  search: SearchResultConnection;
   validatePasswordResetToken: ValidatePasswordResetToken;
   versionInfo: VersionInfo;
 };
@@ -1832,24 +1832,6 @@ export enum SsoIdentityProviderStatus {
   Inactive = 'Inactive'
 }
 
-export type Search = {
-  __typename?: 'Search';
-  edges: Array<SearchEdge>;
-  pageInfo: SearchPageInfoDto;
-};
-
-export type SearchEdge = {
-  __typename?: 'SearchEdge';
-  cursor?: Maybe<Scalars['String']>;
-  node: SearchRecord;
-};
-
-export type SearchPageInfoDto = {
-  __typename?: 'SearchPageInfoDTO';
-  endCursor?: Maybe<Scalars['String']>;
-  hasNextPage: Scalars['Boolean'];
-};
-
 export type SearchRecord = {
   __typename?: 'SearchRecord';
   imageUrl?: Maybe<Scalars['String']>;
@@ -1858,6 +1840,24 @@ export type SearchRecord = {
   recordId: Scalars['String'];
   tsRank: Scalars['Float'];
   tsRankCD: Scalars['Float'];
+};
+
+export type SearchResultConnection = {
+  __typename?: 'SearchResultConnection';
+  edges: Array<SearchResultEdge>;
+  pageInfo: SearchResultPageInfo;
+};
+
+export type SearchResultEdge = {
+  __typename?: 'SearchResultEdge';
+  cursor: Scalars['String'];
+  node: SearchRecord;
+};
+
+export type SearchResultPageInfo = {
+  __typename?: 'SearchResultPageInfo';
+  endCursor?: Maybe<Scalars['String']>;
+  hasNextPage: Scalars['Boolean'];
 };
 
 export type SendInvitationsOutput = {
@@ -2740,7 +2740,7 @@ export type SearchQueryVariables = Exact<{
 }>;
 
 
-export type SearchQuery = { __typename?: 'Query', search: { __typename?: 'Search', edges: Array<{ __typename?: 'SearchEdge', cursor?: string | null, node: { __typename?: 'SearchRecord', recordId: string, objectNameSingular: string, label: string, imageUrl?: string | null, tsRankCD: number, tsRank: number } }>, pageInfo: { __typename?: 'SearchPageInfoDTO', hasNextPage: boolean, endCursor?: string | null } } };
+export type SearchQuery = { __typename?: 'Query', search: { __typename?: 'SearchResultConnection', edges: Array<{ __typename?: 'SearchResultEdge', cursor: string, node: { __typename?: 'SearchRecord', recordId: string, objectNameSingular: string, label: string, imageUrl?: string | null, tsRankCD: number, tsRank: number } }>, pageInfo: { __typename?: 'SearchResultPageInfo', hasNextPage: boolean, endCursor?: string | null } } };
 
 export type SkipSyncEmailOnboardingStepMutationVariables = Exact<{ [key: string]: never; }>;
 

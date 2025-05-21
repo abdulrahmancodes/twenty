@@ -1,7 +1,7 @@
 import { Field, ObjectType } from '@nestjs/graphql';
 
-@ObjectType()
-export class SearchPageInfoDTO {
+@ObjectType('SearchResultPageInfo')
+export class SearchResultPageInfoDTO {
   @Field(() => String, { nullable: true })
   endCursor: string | null;
 

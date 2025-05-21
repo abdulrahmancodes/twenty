@@ -6,14 +6,14 @@ import { SearchApiExceptionFilter } from 'src/engine/core-modules/search/filters
 import { SearchService } from 'src/engine/core-modules/search/services/search.service';
 import { Workspace } from 'src/engine/core-modules/workspace/workspace.entity';
 import { AuthWorkspace } from 'src/engine/decorators/auth/auth-workspace.decorator';
-import { SearchDTO } from 'src/engine/core-modules/search/dtos/search.dto';
+import { SearchResultConnectionDTO } from 'src/engine/core-modules/search/dtos/search-result-connection.dto';
 
 @Resolver()
 @UseFilters(SearchApiExceptionFilter)
 export class SearchResolver {
   constructor(private readonly searchService: SearchService) {}
 
-  @Query(() => SearchDTO)
+  @Query(() => SearchResultConnectionDTO)
   async search(
     @AuthWorkspace() workspace: Workspace,
     @Args()

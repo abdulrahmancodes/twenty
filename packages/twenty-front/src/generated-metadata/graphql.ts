@@ -1688,7 +1688,7 @@ export type Query = {
   objects: ObjectConnection;
   plans: Array<BillingPlanOutput>;
   relationMetadata: RelationMetadataConnection;
-  search: Search;
+  search: SearchResultConnection;
   validatePasswordResetToken: ValidatePasswordResetToken;
   versionInfo: VersionInfo;
 };
@@ -2037,24 +2037,6 @@ export enum SsoIdentityProviderStatus {
   Inactive = 'Inactive'
 }
 
-export type Search = {
-  __typename?: 'Search';
-  edges: Array<SearchEdge>;
-  pageInfo: SearchPageInfoDto;
-};
-
-export type SearchEdge = {
-  __typename?: 'SearchEdge';
-  cursor?: Maybe<Scalars['String']['output']>;
-  node: SearchRecord;
-};
-
-export type SearchPageInfoDto = {
-  __typename?: 'SearchPageInfoDTO';
-  endCursor?: Maybe<Scalars['String']['output']>;
-  hasNextPage: Scalars['Boolean']['output'];
-};
-
 export type SearchRecord = {
   __typename?: 'SearchRecord';
   imageUrl?: Maybe<Scalars['String']['output']>;
@@ -2063,6 +2045,24 @@ export type SearchRecord = {
   recordId: Scalars['String']['output'];
   tsRank: Scalars['Float']['output'];
   tsRankCD: Scalars['Float']['output'];
+};
+
+export type SearchResultConnection = {
+  __typename?: 'SearchResultConnection';
+  edges: Array<SearchResultEdge>;
+  pageInfo: SearchResultPageInfo;
+};
+
+export type SearchResultEdge = {
+  __typename?: 'SearchResultEdge';
+  cursor: Scalars['String']['output'];
+  node: SearchRecord;
+};
+
+export type SearchResultPageInfo = {
+  __typename?: 'SearchResultPageInfo';
+  endCursor?: Maybe<Scalars['String']['output']>;
+  hasNextPage: Scalars['Boolean']['output'];
 };
 
 export type SendInvitationsOutput = {

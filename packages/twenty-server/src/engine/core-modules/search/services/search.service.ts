@@ -41,9 +41,9 @@ import { Workspace } from 'src/engine/core-modules/workspace/workspace.entity';
 import { TwentyORMManager } from 'src/engine/twenty-orm/twenty-orm.manager';
 import { formatSearchTerms } from 'src/engine/core-modules/search/utils/format-search-terms';
 import { SearchArgs } from 'src/engine/core-modules/search/dtos/search-args';
+import { SearchResultConnectionDTO } from 'src/engine/core-modules/search/dtos/search-result-connection.dto';
+import { SearchResultEdgeDTO } from 'src/engine/core-modules/search/dtos/search-result-edge.dto';
 import { SearchRecordDTO } from 'src/engine/core-modules/search/dtos/search-record.dto';
-import { SearchDTO } from 'src/engine/core-modules/search/dtos/search.dto';
-import { SearchEdgeDTO } from 'src/engine/core-modules/search/dtos/search-edge.dto';
 
 type LastRanks = { tsRankCD: number; tsRank: number };
 
@@ -395,7 +395,7 @@ export class SearchService {
   }: {
     sortedRecords: SearchRecordDTO[];
     after?: string;
-  }): SearchEdgeDTO[] {
+  }): SearchResultEdgeDTO[] {
     const recordEdges = [];
 
     const lastRecordIdsPerObject = after
@@ -436,7 +436,7 @@ export class SearchService {
     workspaceId: string;
     limit: number;
     after?: string;
-  }): SearchDTO {
+  }): SearchResultConnectionDTO {
     const searchRecords = recordsWithObjectMetadataItems.flatMap(
       ({ objectMetadataItem, records }) => {
         return records.map((record) => {
