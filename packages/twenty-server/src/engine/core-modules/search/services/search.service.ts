@@ -465,9 +465,16 @@ export class SearchService {
 
     const recordEdges = this.computeEdges({ sortedRecords, after });
 
-    const endCursor = recordEdges[recordEdges.length - 1]?.cursor;
+    if (recordEdges.length === 0) {
+      return { edges: [], pageInfo: { endCursor: null, hasNextPage } };
+    }
 
-    return { edges: recordEdges, pageInfo: { endCursor, hasNextPage } };
+    const lastRecordEdge = recordEdges[recordEdges.length - 1];
+
+    return {
+      edges: recordEdges,
+      pageInfo: { endCursor: lastRecordEdge.cursor, hasNextPage },
+    };
   }
 
   sortSearchObjectResults(searchObjectResultsWithRank: SearchRecordDTO[]) {

@@ -496,6 +496,22 @@ describe('SearchResolver', () => {
         },
       },
     },
+    {
+      title: 'should paginate properly when no records are returned',
+      context: {
+        input: {
+          searchInput: '',
+          limit: 0,
+        },
+        eval: {
+          orderedRecordIds: [],
+          pageInfo: {
+            hasNextPage: true,
+            decodedEndCursor: null,
+          },
+        },
+      },
+    },
   ];
 
   it.each(testsUseCases)('$title', async ({ context }) => {
