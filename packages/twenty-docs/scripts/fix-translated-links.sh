@@ -6,6 +6,7 @@
 
 set -e
 
+# Determine docs directory
 if [ -d "packages/twenty-docs" ]; then
   DOCS_DIR="packages/twenty-docs"
 elif [ -d "fr" ] || [ -d "user-guide" ]; then
@@ -17,43 +18,36 @@ fi
 
 echo "🔧 Fixing internal links in translated documentation..."
 
-EXCLUDED_DIRS="images|snippets|user-guide|developers|twenty-ui|node_modules|scripts"
+# Directories to exclude from processing (non-locale directories)
+EXCLUDED_DIRS="images|snippets|user-guide|developers|twenty-ui|node_modules|scripts|getting-started"
+
+# Documentation sections to fix links for
+DOC_SECTIONS=("user-guide" "developers" "twenty-ui")
 
 for lang_dir in "$DOCS_DIR"/*/ ; do
   lang_code=$(basename "$lang_dir")
 
-  if [[ "$lang_code" =~ ^($EXCLUDED_DIRS)$ ]]; then
-    continue
-  fi
-
-  if [ ! -d "$lang_dir" ] || [ -z "$(ls -A "$lang_dir")" ]; then
+  # Skip excluded directories
+  if [[ "$lang_code" =~ ^($EXCLUDED_DIRS)$ ]] || [ ! -d "$lang_dir" ] || [ -z "$(ls -A "$lang_dir")" ]; then
     continue
   fi
 
   echo "📝 Processing $lang_code documentation..."
 
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|href=\"/user-guide/|href=\"/$lang_code/user-guide/|g" {} \;
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|href=\"/developers/|href=\"/$lang_code/developers/|g" {} \;
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|href=\"/twenty-ui/|href=\"/$lang_code/twenty-ui/|g" {} \;
-
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|](/user-guide/|](/$lang_code/user-guide/|g" {} \;
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|](/developers/|](/$lang_code/developers/|g" {} \;
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|](/twenty-ui/|](/$lang_code/twenty-ui/|g" {} \;
-
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|https://docs\.twenty\.com/user-guide/|https://docs.twenty.com/$lang_code/user-guide/|g" {} \;
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|https://docs\.twenty\.com/developers/|https://docs.twenty.com/$lang_code/developers/|g" {} \;
-  find "$lang_dir" -name "*.mdx" -type f -exec sed -i.bak \
-    "s|https://docs\.twenty\.com/twenty-ui/|https://docs.twenty.com/$lang_code/twenty-ui/|g" {} \;
-
-  find "$lang_dir" -name "*.bak" -type f -delete
+  # Process each MDX file once with all replacements
+  find "$lang_dir" -name "*.mdx" -type f | while read -r file; do
+    # Build sed script with all replacements
+    sed_script=""
+    for section in "${DOC_SECTIONS[@]}"; do
+      sed_script+="s|href=\"/${section}/|href=\"/${lang_code}/${section}/|g;"
+      sed_script+="s|](/${section}/|](/${lang_code}/${section}/|g;"
+      sed_script+="s|https://docs\.twenty\.com/${section}/|https://docs.twenty.com/${lang_code}/${section}/|g;"
+    done
+    
+    # Apply all replacements in a single sed invocation
+    sed -i.bak "$sed_script" "$file"
+    rm -f "${file}.bak"
+  done
 
   echo "✅ $lang_code documentation links fixed"
 done
