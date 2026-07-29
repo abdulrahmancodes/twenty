@@ -5136,6 +5136,7 @@ export enum RowLevelPermissionPredicateOperand {
 export type RunAgentInput = {
   agentUniversalIdentifier: Scalars['String']['input'];
   prompt: Scalars['String']['input'];
+  runAsWorkspaceMemberId?: InputMaybe<Scalars['UUID']['input']>;
 };
 
 export type RunAgentResult = {

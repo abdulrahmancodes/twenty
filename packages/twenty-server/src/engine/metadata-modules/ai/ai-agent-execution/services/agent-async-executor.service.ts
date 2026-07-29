@@ -119,6 +119,7 @@ export class AgentAsyncExecutorService {
     authContext,
     workspaceId,
     userWorkspaceId,
+    runAsRoleId,
     operationType = UsageOperationType.AI_WORKFLOW_TOKEN,
   }: {
     agent: AgentEntity | null;
@@ -128,6 +129,7 @@ export class AgentAsyncExecutorService {
     authContext?: WorkspaceAuthContext;
     workspaceId: string;
     userWorkspaceId?: string | null;
+    runAsRoleId?: string;
     operationType?: UsageOperationType;
   }): Promise<AgentExecutionResult> {
     await this.billingUsageService.hasAvailableCreditsOrThrow(workspaceId);
@@ -178,8 +180,12 @@ export class AgentAsyncExecutorService {
         // Workflow agent registry tools are scoped exclusively by the agent
         // permission-tab role. No role means no registry tools.
         if (isDefined(agentRoleId)) {
+          // The agent role stays first: it is the role explicit object grants
+          // are resolved against. A run-as role only ever narrows it further.
           const agentRolePermissionConfig: RolePermissionConfig = {
-            intersectionOf: [agentRoleId],
+            intersectionOf: isDefined(runAsRoleId)
+              ? [agentRoleId, runAsRoleId]
+              : [agentRoleId],
           };
 
           const toolProviderContext: ToolProviderContext = {

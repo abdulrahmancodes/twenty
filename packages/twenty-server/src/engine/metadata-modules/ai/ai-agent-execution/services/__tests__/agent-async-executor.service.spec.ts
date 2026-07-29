@@ -167,6 +167,28 @@ describe('AgentAsyncExecutorService — workflow agent role-scoped tool resoluti
     );
   });
 
+  it('intersects the agent role with the run-as role, keeping the agent role first', async () => {
+    roleTargetRepository.findOne.mockResolvedValueOnce({ roleId: agentRoleId });
+
+    await service.executeAgent({
+      agent: buildAgent(),
+      userPrompt: 'test',
+      baseSystemPrompt: 'base system prompt',
+      workspaceId,
+      runAsRoleId: 'run-as-role-id',
+    });
+
+    expect(toolRegistry.getToolsByCategories).toHaveBeenCalledWith(
+      expect.objectContaining({
+        roleId: agentRoleId,
+        rolePermissionConfig: {
+          intersectionOf: [agentRoleId, 'run-as-role-id'],
+        },
+      }),
+      expect.objectContaining({ wrapWithErrorContext: false }),
+    );
+  });
+
   it('does not resolve registry tools when the agent has no role (fail-closed)', async () => {
     roleTargetRepository.findOne.mockResolvedValueOnce(null);
 

@@ -5,8 +5,12 @@ import {
 import { isDefined } from 'twenty-shared/utils';
 
 import { type RolePermissionConfig } from 'src/engine/twenty-orm/types/role-permission-config';
+import { computePermissionIntersection } from 'src/engine/twenty-orm/utils/compute-permission-intersection.util';
 
-// Multi-role union/intersection is not ready — use the first assigned role only.
+// Mirrors what WorkspaceEntityManager grants the repository, so callers that
+// read permissions ahead of a query (tool descriptors, selectable fields) see
+// the same result the query itself will enforce.
+// Multi-role union is not ready — use the first assigned role only.
 export const getObjectsPermissionsFromRolePermissionConfig = ({
   rolesPermissions,
   rolePermissionConfig,
@@ -18,12 +22,15 @@ export const getObjectsPermissionsFromRolePermissionConfig = ({
     return {};
   }
 
-  const roleId =
-    'intersectionOf' in rolePermissionConfig
-      ? rolePermissionConfig.intersectionOf[0]
-      : 'unionOf' in rolePermissionConfig
-        ? rolePermissionConfig.unionOf[0]
-        : undefined;
+  if ('intersectionOf' in rolePermissionConfig) {
+    return computePermissionIntersection(
+      rolePermissionConfig.intersectionOf.map(
+        (roleId) => rolesPermissions[roleId] ?? {},
+      ),
+    );
+  }
+
+  const roleId = rolePermissionConfig.unionOf[0];
 
   if (!isDefined(roleId)) {
     return {};

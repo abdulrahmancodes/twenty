@@ -52,7 +52,7 @@ describe('getObjectsPermissionsFromRolePermissionConfig', () => {
     ).toEqual(defaultRolePermissions);
   });
 
-  it('should use the first role when multiple are provided', () => {
+  it('should intersect the permissions of every intersected role', () => {
     expect(
       getObjectsPermissionsFromRolePermissionConfig({
         rolesPermissions,
@@ -60,7 +60,38 @@ describe('getObjectsPermissionsFromRolePermissionConfig', () => {
           intersectionOf: ['agent-role-id', 'default-role-id'],
         },
       }),
-    ).toEqual(agentRolePermissions);
+    ).toEqual({
+      [OBJECT_ID]: {
+        canReadObjectRecords: false,
+        canUpdateObjectRecords: false,
+        canSoftDeleteObjectRecords: false,
+        canDestroyObjectRecords: false,
+        restrictedFields: {},
+        rowLevelPermissionPredicates: [],
+        rowLevelPermissionPredicateGroups: [],
+      },
+    });
+  });
+
+  it('should deny everything when an intersected role is missing from the cache', () => {
+    expect(
+      getObjectsPermissionsFromRolePermissionConfig({
+        rolesPermissions,
+        rolePermissionConfig: {
+          intersectionOf: ['agent-role-id', 'missing-role-id'],
+        },
+      }),
+    ).toEqual({
+      [OBJECT_ID]: {
+        canReadObjectRecords: false,
+        canUpdateObjectRecords: false,
+        canSoftDeleteObjectRecords: false,
+        canDestroyObjectRecords: false,
+        restrictedFields: {},
+        rowLevelPermissionPredicates: [],
+        rowLevelPermissionPredicateGroups: [],
+      },
+    });
   });
 
   it('should return empty permissions when bypassing checks', () => {
